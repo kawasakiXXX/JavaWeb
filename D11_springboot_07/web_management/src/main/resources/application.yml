@@ -1,0 +1,28 @@
+#配置项的值以0开头的话，需要用‘’，因为在yml中0开头的数字会被识别为八进制
+spring:
+  application:
+    name: JavaWeb
+  #配置数据库连接信息
+  datasource:
+    url: jdbc:mysql://localhost:3306/web01
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: '@Likekawasaki6'
+  servlet:
+    multipart:
+      #最大单个文件大小
+      max-file-size: 10MB
+      #最大请求大小（包括所有文件和表单数据）
+      max-request-size: 100MB
+
+mybatis:
+  #配置MyBatis日志输出
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #配置MyBatis自动将数据库字段映射为Java属性(开启驼峰命名)
+    map-underscore-to-camel-case: true
+
+  #配置MyBatis的Mapper文件位置（XML映射配置文件）
+  mapper-locations: classpath:com/cds/javaweb/web_01/mapper/*.xml
+
+

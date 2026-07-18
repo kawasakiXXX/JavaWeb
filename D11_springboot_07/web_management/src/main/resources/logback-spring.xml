@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- ==================== 日志输出格式定义 ==================== -->
+    <!-- 控制台格式：带颜色，适合开发调试 -->
+    <property name="CONSOLE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg%n"/>
+
+    <!-- 文件格式：不带颜色，保留完整信息，适合生产环境 -->
+    <property name="FILE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"/>
+
+    <!-- 日志文件存储路径（相对于项目运行目录，也可改为绝对路径） -->
+    <property name="LOG_PATH" value="./logs"/>
+    <!-- 日志文件名前缀 -->
+    <property name="LOG_FILE_NAME" value="javaweb"/>
+
+
+    <!-- ==================== 控制台输出 ==================== -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 维度过滤器：只输出 >= 指定级别的日志，由下方 property 控制 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${CONSOLE_LOG_LEVEL:-DEBUG}</level>
+        </filter>
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+
+    <!-- ==================== 文件输出 ==================== -->
+    <!-- 滚动文件：按日期 + 大小滚动，自动归档压缩 -->
+
+    <!-- 所有级别日志（含 DEBUG） -->
+    <appender name="FILE_ALL" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- 每天滚动，文件名带日期；%i 为序号（同一天内按大小分割时自增） -->
+            <fileNamePattern>${LOG_PATH}/archive/${LOG_FILE_NAME}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <!-- 单个文件最大 10MB -->
+            <maxFileSize>10MB</maxFileSize>
+            <!-- 归档保留 30 天 -->
+            <maxHistory>30</maxHistory>
+            <!-- 所有归档文件总大小上限 -->
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 仅 ERROR 级别日志（排查问题时快速定位错误） -->
+    <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <file>${LOG_PATH}/${LOG_FILE_NAME}-error.log</file>
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/archive/${LOG_FILE_NAME}-error.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>90</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 仅 SQL 日志（MyBatis 执行语句独立输出，便于排查数据库问题） -->
+    <appender name="FILE_SQL" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${LOG_FILE_NAME}-sql.log</file>
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/archive/${LOG_FILE_NAME}-sql.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>200MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+
+    <!-- ==================== 日志级别开关 ==================== -->
+    <!--
+        修改下方 property 的 value 即可控制各模块的日志级别，无需重启集群配置中心。
+        级别从低到高：TRACE < DEBUG < INFO < WARN < ERROR < OFF
+        设为 OFF 可彻底关闭对应模块的日志。
+    -->
+
+    <!-- 项目自身日志级别 -->
+    <property name="APP_LOG_LEVEL" value="DEBUG"/>
+
+    <!-- Spring 框架日志级别（启动后建议调为 WARN） -->
+    <property name="SPRING_LOG_LEVEL" value="INFO"/>
+
+    <!-- MyBatis 日志级别（DEBUG 输出完整 SQL；上线后可调为 WARN） -->
+    <property name="MYBATIS_LOG_LEVEL" value="WARN"/>
+
+    <!-- 数据库驱动/JDBC 日志级别 -->
+    <property name="JDBC_LOG_LEVEL" value="WARN"/>
+
+    <!-- 第三方库杂项日志级别 -->
+    <property name="OTHER_LOG_LEVEL" value="WARN"/>
+
+    <!-- 控制台输出最低级别（DEBUG / INFO / WARN / ERROR / OFF） -->
+    <property name="CONSOLE_LOG_LEVEL" value="DEBUG"/>
+
+
+    <!-- ==================== Logger 配置 ==================== -->
+    <!-- 项目业务代码 -->
+    <logger name="com.cds.javaweb" level="${APP_LOG_LEVEL}"/>
+
+    <!-- MyBatis SQL 日志：写入独立文件 -->
+    <logger name="com.cds.javaweb.web_01.mapper" level="DEBUG" additivity="false">
+        <appender-ref ref="FILE_SQL"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <!-- Spring 框架 -->
+    <logger name="org.springframework" level="${SPRING_LOG_LEVEL}"/>
+    <logger name="org.springframework.boot" level="${SPRING_LOG_LEVEL}"/>
+
+    <!-- MyBatis 框架 -->
+    <logger name="org.mybatis" level="${MYBATIS_LOG_LEVEL}"/>
+    <logger name="org.apache.ibatis" level="${MYBATIS_LOG_LEVEL}"/>
+
+    <!-- 数据库连接池 / JDBC -->
+    <logger name="com.zaxxer.hikari" level="${JDBC_LOG_LEVEL}"/>
+    <logger name="org.hibernate" level="${JDBC_LOG_LEVEL}"/>
+
+    <!-- 第三方杂项 -->
+    <logger name="org.apache.catalina" level="${OTHER_LOG_LEVEL}"/>
+    <logger name="org.apache.coyote" level="${OTHER_LOG_LEVEL}"/>
+
+
+    <!-- ==================== 根 Logger ==================== -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE_ALL"/>
+        <appender-ref ref="FILE_ERROR"/>
+    </root>
+
+</configuration>
